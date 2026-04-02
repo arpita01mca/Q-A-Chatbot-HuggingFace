@@ -1,6 +1,9 @@
 import streamlit as st
 from transformers import pipeline
 from langchain_community.llms import HuggingFacePipeline
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.chains import LLMChain
 
 # -------------------------------
 # Streamlit UI
@@ -24,20 +27,29 @@ max_tokens = st.sidebar.slider("Max Tokens", 50, 300, 150)
 @st.cache_resource
 def create_llm(model_name, temperature=0.7, max_new_tokens=150):
     """
-    Create a Hugging Face text-generation pipeline and wrap it with LangChain.
+    Create a Hugging Face text-generation pipeline and wrap it as a LangChain LLM.
     """
-    # Create HF pipeline
     pipe = pipeline(
-        task="text-generation",  # universal, works for Flan-T5
+        task="text2text-generation",
         model=model_name,
         temperature=temperature,
         max_new_tokens=max_new_tokens
     )
-    # Wrap with LangChain
     return HuggingFacePipeline(pipeline=pipe)
 
-# Initialize LLM
 llm = create_llm(model_name, temperature, max_tokens)
+
+# -------------------------------
+# Prompt Template & Chain
+# -------------------------------
+prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", "You are a helpful assistant. Answer questions clearly, politely, and informatively."),
+        ("user", "Question: {question}")
+    ]
+)
+output_parser = StrOutputParser()
+chain = LLMChain(prompt=prompt, llm=llm, output_parser=output_parser)
 
 # -------------------------------
 # User Input
@@ -46,11 +58,7 @@ user_input = st.text_input("You:", placeholder="Type your question here...")
 
 if user_input:
     try:
-        # Construct prompt with system instruction
-        prompt_text = f"You are a helpful assistant. Answer the following question clearly and politely:\n{user_input}"
-        # Generate response
-        output = llm(prompt_text)
-        # HuggingFacePipeline returns a string, so we can display directly
-        st.markdown(f"**Bot:** {output}")
+        response = chain.invoke({"question": user_input})
+        st.markdown(f"**Bot:** {response}")
     except Exception as e:
         st.error(f"⚠️ Error: {str(e)}")
