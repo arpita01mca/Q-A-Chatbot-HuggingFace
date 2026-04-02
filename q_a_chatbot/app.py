@@ -28,12 +28,11 @@ def create_llm(model_name, temperature=0.7, max_new_tokens=150):
     Create a Hugging Face text-generation pipeline.
     """
     pipe = pipeline(
-        task="text2text-generation",
-        model=model_name,
-        temperature=temperature,
-        max_new_tokens=max_new_tokens
-    )
-    return pipe
+    task="text-generation",  # universal, works for Flan-T5
+    model=model_name,
+    temperature=temperature,
+    max_new_tokens=max_new_tokens
+)
 
 llm = create_llm(model_name, temperature, max_tokens)
 
