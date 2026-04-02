@@ -37,7 +37,8 @@ def get_response(question, llm):
     formatted_prompt = prompt_template.format_prompt(question=question).to_string()
     
     # Generate response
-    answer = llm(formatted_prompt)
+    output = llm.generate([formatted_prompt])  # Note: list of prompts
+    answer = output.generations[0][0].text      # Extract the generated text
     return answer
 
 # -------------------------------
