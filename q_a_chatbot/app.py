@@ -4,7 +4,6 @@ from langchain_community.llms import HuggingFacePipeline
 from langchain.prompts.chat import ChatPromptTemplate
 from langchain.output_parsers import StrOutputParser
 from langchain.chains import LLMChain
-
 # -------------------------------
 # Streamlit UI
 # -------------------------------
