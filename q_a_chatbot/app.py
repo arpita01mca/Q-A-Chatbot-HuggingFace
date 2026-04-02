@@ -28,7 +28,7 @@ max_tokens = st.sidebar.slider("Max Tokens", 50, 300, 150)
 @st.cache_resource
 def load_model(model_name, temperature, max_tokens):
     return pipeline(
-        task="text2text-generation",
+        task="text-generation",   # <--- Use 'text-generation' for Flan-T5
         model=model_name,
         temperature=temperature,
         max_new_tokens=max_tokens
@@ -43,7 +43,6 @@ user_input = st.text_input("You:", placeholder="Type your question here...")
 
 if user_input:
     try:
-        # Directly generate an answer
         output = llm(user_input)
         answer = output[0]['generated_text']
         st.markdown(f"**Bot:** {answer}")
