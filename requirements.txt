@@ -1,5 +1,6 @@
-streamlit>=1.25
-transformers==4.30.2
+transformers>=4.37.0
+tokenizers>=0.14.3
+streamlit
 torch>=2.0
 langchain>=0.1
 langchain_core>=0.0.250
