@@ -15,7 +15,7 @@ st.markdown("Ask any question below and get a helpful response from a Hugging Fa
 st.sidebar.header("Settings")
 model_name = st.sidebar.selectbox(
     "Select a model",
-    ["google/flan-t5-small", "google/flan-t5-base"]
+    ["google/flan-t5-large", "google/flan-t5-xl"]
 )
 temperature = st.sidebar.slider("Temperature", 0.0, 1.0, 0.7)
 max_tokens = st.sidebar.slider("Max Tokens", 50, 300, 150)
