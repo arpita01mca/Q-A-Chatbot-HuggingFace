@@ -1,6 +1,8 @@
-langchain-openai
+streamlit
 langchain
-python-dotenv
+langchain-openai
 langchain_community
 langchain_core
-streamlit
+python-dotenv
+transformers
+torch
