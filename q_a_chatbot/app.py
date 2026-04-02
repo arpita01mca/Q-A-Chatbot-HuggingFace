@@ -1,5 +1,37 @@
 import streamlit as st
 from transformers import pipeline
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_community.llms import HuggingFacePipeline
+
+# -------------------------------
+# Prompt Template
+# -------------------------------
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a helpful assistant. Answer questions clearly, politely, and informatively."),
+    ("user", "Question: {question}")
+])
+
+# -------------------------------
+# Initialize Hugging Face LLM
+# -------------------------------
+@st.cache_resource
+def create_llm(model_name, temperature=0.7, max_new_tokens=150):
+    pipe = pipeline(
+        task="text-generation",
+        model=model_name,
+        temperature=temperature,
+        max_new_tokens=max_new_tokens
+    )
+    return HuggingFacePipeline(pipeline=pipe)
+
+# -------------------------------
+# Generate Response
+# -------------------------------
+def get_response(question, llm):
+    output_parser = StrOutputParser()
+    chain = prompt | llm | output_parser
+    return chain.invoke({'question': question})
 
 # -------------------------------
 # Streamlit UI
@@ -7,13 +39,9 @@ from transformers import pipeline
 st.set_page_config(page_title="Hugging Face QA Chatbot", page_icon="🤖")
 st.title("🤖 QA Chatbot with Hugging Face")
 
-st.markdown(
-    """
-    Ask any question below and get a helpful response from a Hugging Face model.
-    """
-)
+st.markdown("Ask any question below and get a helpful response from a Hugging Face model.")
 
-# Sidebar settings
+# Sidebar
 st.sidebar.header("Settings")
 model_name = st.sidebar.selectbox(
     "Select a model",
@@ -22,29 +50,15 @@ model_name = st.sidebar.selectbox(
 temperature = st.sidebar.slider("Temperature", 0.0, 1.0, 0.7)
 max_tokens = st.sidebar.slider("Max Tokens", 50, 300, 150)
 
-# -------------------------------
-# Load the Hugging Face pipeline
-# -------------------------------
-@st.cache_resource
-def load_model(model_name, temperature, max_tokens):
-    return pipeline(
-        task="text-generation",   # <--- Use 'text-generation' for Flan-T5
-        model=model_name,
-        temperature=temperature,
-        max_new_tokens=max_tokens
-    )
+# Load LLM
+llm = create_llm(model_name, temperature, max_tokens)
 
-llm = load_model(model_name, temperature, max_tokens)
-
-# -------------------------------
 # User input
-# -------------------------------
 user_input = st.text_input("You:", placeholder="Type your question here...")
 
 if user_input:
     try:
-        output = llm(user_input)
-        answer = output[0]['generated_text']
-        st.markdown(f"**Bot:** {answer}")
+        response = get_response(user_input, llm)
+        st.markdown(f"**Bot:** {response}")
     except Exception as e:
         st.error(f"⚠️ Error: {str(e)}")
