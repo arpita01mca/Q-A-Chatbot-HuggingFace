@@ -1,9 +1,5 @@
 import streamlit as st
 from transformers import pipeline
-from langchain_community.llms import HuggingFacePipeline
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.chains import LLMChain
 
 # -------------------------------
 # Streamlit UI
@@ -22,34 +18,18 @@ temperature = st.sidebar.slider("Temperature", 0.0, 1.0, 0.7)
 max_tokens = st.sidebar.slider("Max Tokens", 50, 300, 150)
 
 # -------------------------------
-# Load LLM
+# Load Hugging Face Pipeline
 # -------------------------------
 @st.cache_resource
-def create_llm(model_name, temperature=0.7, max_new_tokens=150):
-    """
-    Create a Hugging Face text-generation pipeline and wrap it as a LangChain LLM.
-    """
-    pipe = pipeline(
-        task="text2text-generation",
+def load_pipeline(model_name, temperature, max_new_tokens):
+    return pipeline(
+        task="text2text-generation",  # correct for Flan-T5
         model=model_name,
         temperature=temperature,
         max_new_tokens=max_new_tokens
     )
-    return HuggingFacePipeline(pipeline=pipe)
 
-llm = create_llm(model_name, temperature, max_tokens)
-
-# -------------------------------
-# Prompt Template & Chain
-# -------------------------------
-prompt = ChatPromptTemplate.from_messages(
-    [
-        ("system", "You are a helpful assistant. Answer questions clearly, politely, and informatively."),
-        ("user", "Question: {question}")
-    ]
-)
-output_parser = StrOutputParser()
-chain = LLMChain(prompt=prompt, llm=llm, output_parser=output_parser)
+pipe = load_pipeline(model_name, temperature, max_tokens)
 
 # -------------------------------
 # User Input
@@ -58,7 +38,10 @@ user_input = st.text_input("You:", placeholder="Type your question here...")
 
 if user_input:
     try:
-        response = chain.invoke({"question": user_input})
+        # Combine system instruction + user question
+        prompt_text = f"You are a helpful assistant. Answer the following question clearly and politely:\n{user_input}"
+        result = pipe(prompt_text)  # call the Hugging Face pipeline directly
+        response = result[0]["generated_text"]
         st.markdown(f"**Bot:** {response}")
     except Exception as e:
         st.error(f"⚠️ Error: {str(e)}")
