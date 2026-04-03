@@ -3,6 +3,7 @@ from transformers import pipeline
 from langchain_community.llms import HuggingFacePipeline
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
+import re
 
 # -------------------------------
 # Page Configuration
@@ -15,7 +16,7 @@ st.set_page_config(
 
 st.title("🤖 QA Chatbot with Hugging Face")
 st.markdown(
-    "Ask any question below and get a helpful response from a Hugging Face model."
+    "Ask any question below and get a helpful, beginner-friendly answer."
 )
 
 # -------------------------------
@@ -28,8 +29,8 @@ model_name = st.sidebar.selectbox(
     [
         "google/flan-t5-small",
         "google/flan-t5-base",
-        "google/flan-t5-large",            # better reasoning
-        "tiiuae/falcon-7b-instruct",       # stronger instruction model
+        "google/flan-t5-large",          
+        "tiiuae/falcon-7b-instruct",
     ]
 )
 
@@ -64,9 +65,10 @@ llm = create_hf_pipeline(model_name, temperature, max_tokens)
 prompt = PromptTemplate(
     template=(
         "You are a helpful AI assistant.\n"
-        "Answer the question clearly and concisely in plain English.\n"
+        "Answer clearly and concisely in plain English.\n"
         "Do NOT repeat the question.\n"
-        "If an example is requested, provide a simple real-world example.\n\n"
+        "If an example is requested, provide a simple real-world example.\n"
+        "Keep the answer beginner-friendly and informative.\n\n"
         "Question: {question}\n"
         "Answer:"
     ),
@@ -88,19 +90,16 @@ user_input = st.text_input(
 # -------------------------------
 if user_input:
     try:
-        # Run the model
-        response = chain.run({"question": user_input})
+        raw_response = chain.run({"question": user_input})
 
-        # Remove echoed input if the model repeats it
-        if response.startswith(user_input):
-            response = response[len(user_input):].strip()
+        # Remove repeated question if echoed
+        response = re.sub(re.escape(user_input), "", raw_response, flags=re.IGNORECASE).strip()
 
-        # Optional: shorten overly long answers (first 2 sentences)
-        sentences = response.split(". ")
-        if len(sentences) > 2:
-            response = ". ".join(sentences[:2]) + "."
+        # Limit to first 2-3 sentences for readability
+        sentences = re.split(r'(?<=[.!?]) +', response)
+        response = ' '.join(sentences[:3])
 
-        # Display chat-style
+        # Display in chat-style
         st.markdown(f"**You:** {user_input}")
         st.markdown(f"**Answer:** {response}")
 
