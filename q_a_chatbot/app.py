@@ -39,7 +39,7 @@ def create_hf_pipeline(model_name, temperature=0.7, max_new_tokens=150):
         task="text2text-generation",
         model=model_name,
         max_new_tokens=max_new_tokens,
-        do_sample=True,      # enable creative sampling
+        do_sample=True,
         temperature=temperature,
         top_p=0.9
     )
@@ -55,8 +55,8 @@ prompt = PromptTemplate(
     template=(
         "You are a helpful AI assistant.\n"
         "Answer the question fully and clearly.\n"
+        "Do NOT repeat the question in your answer.\n"
         "If the question asks for an example, provide a simple real-world example.\n"
-        "Do not repeat the question.\n"
         "Answer in plain English suitable for beginners.\n\n"
         "Question: {question}\n"
         "Answer:"
@@ -83,6 +83,10 @@ if user_input:
 
         # Remove repeated input if the model echoes it
         response = response.replace(user_input, "").strip()
+
+        # Optional: shorten overly long responses (first 2 sentences)
+        if len(response.split('.')) > 2:
+            response = '. '.join(response.split('.')[:2]) + '.'
 
         # Display in chat-style format
         st.markdown(f"**You:** {user_input}")
