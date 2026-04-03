@@ -27,8 +27,9 @@ st.sidebar.header("⚙️ Settings")
 model_name = st.sidebar.selectbox(
     "Select a model",
     [
-        "google/flan-t5-small",
-        "google/flan-t5-base"
+        "google/flan-t5-base",
+        "google/flan-t5-small"
+        
     ]
 )
 
