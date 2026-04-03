@@ -42,10 +42,6 @@ max_tokens = st.sidebar.slider("Max Tokens", 50, 300, 150)
 # -------------------------------
 @st.cache_resource
 def create_hf_pipeline(model_name, temperature=0.7, max_new_tokens=150):
-    """
-    Create a Hugging Face text2text-generation pipeline wrapped in LangChain.
-    Enables sampling for more natural outputs.
-    """
     text2text_pipe = pipeline(
         task="text2text-generation",
         model=model_name,
@@ -60,15 +56,15 @@ def create_hf_pipeline(model_name, temperature=0.7, max_new_tokens=150):
 llm = create_hf_pipeline(model_name, temperature, max_tokens)
 
 # -------------------------------
-# Prompt Template
+# Stronger Prompt Template
 # -------------------------------
 prompt = PromptTemplate(
     template=(
         "You are a helpful AI assistant.\n"
-        "Answer clearly and concisely in plain English.\n"
+        "Answer clearly and concisely in plain English, suitable for beginners.\n"
         "Do NOT repeat the question.\n"
-        "If an example is requested, provide a simple real-world example.\n"
-        "Keep the answer beginner-friendly and informative.\n\n"
+        "Provide a simple real-world example if relevant.\n"
+        "Keep it short and informative.\n\n"
         "Question: {question}\n"
         "Answer:"
     ),
@@ -92,14 +88,14 @@ if user_input:
     try:
         raw_response = chain.run({"question": user_input})
 
-        # Remove repeated question if echoed
+        # Remove any repeated input
         response = re.sub(re.escape(user_input), "", raw_response, flags=re.IGNORECASE).strip()
 
-        # Limit to first 2-3 sentences for readability
+        # Limit to first 2 sentences for clarity
         sentences = re.split(r'(?<=[.!?]) +', response)
-        response = ' '.join(sentences[:3])
+        response = ' '.join(sentences[:2])
 
-        # Display in chat-style
+        # Display as chat
         st.markdown(f"**You:** {user_input}")
         st.markdown(f"**Answer:** {response}")
 
