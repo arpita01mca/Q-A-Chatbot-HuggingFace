@@ -3,7 +3,6 @@ from transformers import pipeline
 from langchain_community.llms import HuggingFacePipeline
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
-import re
 
 # -------------------------------
 # Page Configuration
@@ -29,18 +28,17 @@ model_name = st.sidebar.selectbox(
     [
         "google/flan-t5-base",
         "google/flan-t5-small"
-        
     ]
 )
 
-temperature = st.sidebar.slider("Temperature", 0.0, 1.0, 0.7)
-max_tokens = st.sidebar.slider("Max Tokens", 50, 300, 150)
+temperature = st.sidebar.slider("Temperature", 0.0, 1.0, 0.0)  # lower for factual answers
+max_tokens = st.sidebar.slider("Max Tokens", 50, 500, 300)
 
 # -------------------------------
 # Load Hugging Face Pipeline
 # -------------------------------
 @st.cache_resource
-def create_hf_pipeline(model_name, temperature=0.7, max_new_tokens=150):
+def create_hf_pipeline(model_name, temperature=0.0, max_new_tokens=300):
     """
     Load a text2text-generation pipeline with sampling for more natural outputs.
     """
@@ -65,8 +63,8 @@ prompt = PromptTemplate(
         "You are a helpful AI assistant for beginners.\n"
         "Answer the question clearly and concisely in plain English.\n"
         "Do NOT repeat the question.\n"
-        "Provide a simple, real-world example if relevant.\n"
-        "Keep the answer short, friendly, and informative.\n\n"
+        "Keep the answer short (1–2 sentences) and friendly.\n"
+        "Provide a simple, real-world example if relevant.\n\n"
         "Question: {question}\n"
         "Answer:"
     ),
@@ -88,22 +86,15 @@ user_input = st.text_input(
 # -------------------------------
 if user_input:
     try:
-        raw_response = chain.run({"question": user_input})
-
-        # Remove echoed input if model repeats the question
-        response = re.sub(re.escape(user_input), "", raw_response, flags=re.IGNORECASE).strip()
-
-        # Limit to first 2 sentences for clarity
-        sentences = re.split(r'(?<=[.!?]) +', response)
-        response = ' '.join(sentences[:2]).strip()
+        raw_response = chain.run({"question": user_input}).strip()
 
         # Ensure the response ends with a period
-        if response and not response.endswith(('.', '!', '?')):
-            response += '.'
+        if raw_response and not raw_response.endswith(('.', '!', '?')):
+            raw_response += '.'
 
         # Display chat-style
         st.markdown(f"**You:** {user_input}")
-        st.markdown(f"**Answer:** {response}")
+        st.markdown(f"**Answer:** {raw_response}")
 
     except Exception as e:
         st.error(f"⚠️ Error: {str(e)}")
