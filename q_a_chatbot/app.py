@@ -31,29 +31,27 @@ model_name = st.sidebar.selectbox(
     ]
 )
 
-temperature = st.sidebar.slider("Temperature", 0.0, 1.0, 0.0)  # lower for factual answers
 max_tokens = st.sidebar.slider("Max Tokens", 50, 500, 300)
 
 # -------------------------------
 # Load Hugging Face Pipeline
 # -------------------------------
 @st.cache_resource
-def create_hf_pipeline(model_name, temperature=0.0, max_new_tokens=300):
+def create_hf_pipeline(model_name, max_new_tokens=300):
     """
-    Load a text2text-generation pipeline with sampling for more natural outputs.
+    Load a text2text-generation pipeline with greedy decoding for accuracy.
     """
     text2text_pipe = pipeline(
         task="text2text-generation",
         model=model_name,
         max_new_tokens=max_new_tokens,
-        do_sample=True,
-        temperature=temperature,
-        top_p=0.9,
+        do_sample=False,      # Greedy decoding for consistent factual answers
+        temperature=20       # Ignored when do_sample=False
     )
     llm = HuggingFacePipeline(pipeline=text2text_pipe)
     return llm
 
-llm = create_hf_pipeline(model_name, temperature, max_tokens)
+llm = create_hf_pipeline(model_name, max_tokens)
 
 # -------------------------------
 # Prompt Template
@@ -61,9 +59,9 @@ llm = create_hf_pipeline(model_name, temperature, max_tokens)
 prompt = PromptTemplate(
     template=(
         "You are a helpful AI assistant for beginners.\n"
-        "Answer the question clearly and concisely in plain English.\n"
+        "Answer the question clearly and accurately in plain English.\n"
         "Do NOT repeat the question.\n"
-        "Keep the answer short (1–2 sentences) and friendly.\n"
+        "Keep the answer short (1–2 sentences).\n"
         "Provide a simple, real-world example if relevant.\n\n"
         "Question: {question}\n"
         "Answer:"
